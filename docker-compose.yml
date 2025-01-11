@@ -1,0 +1,29 @@
+name: 'lbds-server'
+services:
+  app:
+    build: .
+    container_name: fastapi_app
+    ports:
+      - '8000:8000'
+    depends_on:
+      - postgres-db
+    networks:
+      - app-networks
+    env_file:
+      - .env.development
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres_db
+    # restart: always
+    environment:
+      POSTGRES_USER: tannat
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: lbds_local
+    ports:
+      - '5432:5432'
+    networks:
+      - app-networks
+
+networks:
+  app-networks:
