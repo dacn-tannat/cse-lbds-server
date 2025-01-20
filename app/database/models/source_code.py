@@ -1,0 +1,20 @@
+from sqlalchemy import Column, Integer, Text, Time, JSON, Sequence
+from app.database.config import Base
+
+class SourceCode(Base):
+    __tablename__ = "source_code"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    problem_id = Column(Integer, nullable=False)
+    source_code = Column(Text, nullable=False)
+    submit_time = Column(Time(timezone=True), nullable=False)
+    score = Column(Integer, nullable=True)
+    verdict = Column(JSON, nullable=True) 
+    status = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    model_prediction = Column(JSON, nullable=True)
+
+    def __repr__(self):
+        return (
+            f"<SourceCode(id={self.id}, problem_id={self.problem_id}, status={self.status}, user_id={self.user_id})>"
+        )
