@@ -5,14 +5,11 @@ import httpx
 from dotenv import load_dotenv
 import os
 
-from app.services.prediction.prediction import Prediction
-
 # Load the .env file
 load_dotenv('.env.development')
 
 # Access the variables
 jobe_url = os.getenv("JOBE_URL") + 'runs'
-model_path = os.getenv("PREDICTION_MODEL_PATH")
 
 class SourceCodeService:
     def __init__(self, db):
@@ -97,9 +94,5 @@ class SourceCodeService:
             "score": score,
             "message": message
         }
-    
-    def predict(self, source_code):
-
-        return Prediction(model_path, 50, 157, 64, 200, 2, 0.5).predict(source_code)
         
         

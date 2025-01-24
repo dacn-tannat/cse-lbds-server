@@ -7,9 +7,6 @@ class Problem(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
-    category = Column(ARRAY(Text), nullable=True)
-    level = Column(Text, nullable=True)
-    image = Column(Text, nullable=True)
     constrain = Column(ARRAY(Text), nullable=True)
     testcase = Column(ARRAY(JSON), nullable=True)
 

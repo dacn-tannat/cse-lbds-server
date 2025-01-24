@@ -12,7 +12,6 @@ class SourceCode(Base):
     verdict = Column(ARRAY(JSON), nullable=True)
     status = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
-    model_prediction = Column(ARRAY(JSON), nullable=True)
 
     def __repr__(self):
         return (
