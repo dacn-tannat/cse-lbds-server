@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Time, JSON, Sequence
+from sqlalchemy import Column, Integer, Text, Time, JSON, ARRAY
 from app.database.config import Base
 
 class SourceCode(Base):
@@ -9,10 +9,10 @@ class SourceCode(Base):
     source_code = Column(Text, nullable=False)
     submit_time = Column(Time(timezone=True), nullable=False)
     score = Column(Integer, nullable=True)
-    verdict = Column(JSON, nullable=True) 
+    verdict = Column(ARRAY(JSON), nullable=True)
     status = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
-    model_prediction = Column(JSON, nullable=True)
+    model_prediction = Column(ARRAY(JSON), nullable=True)
 
     def __repr__(self):
         return (
