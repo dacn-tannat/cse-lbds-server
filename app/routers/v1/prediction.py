@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends
-from requests import Session
+from sqlalchemy.orm import Session
 
 from app.database.config import get_db
 from app.services.prediction.prediction import PredictionService

@@ -45,8 +45,12 @@ class SourceCodeService:
                 }
             }
 
-            async with httpx.AsyncClient() as client:
-                response = await client.post(jobe_url, json=payload)
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(jobe_url, json=payload)
+            except Exception as e:
+                print(e)
+                raise HTTPException(status_code=500, detail='Error when sending request to Jobe API')
     
             if response.status_code == 200:
                 response_data = response.json()

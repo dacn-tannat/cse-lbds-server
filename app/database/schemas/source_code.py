@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import List
 from pydantic import BaseModel
 
 class SourceCodeRequestSchema(BaseModel):
@@ -10,7 +12,7 @@ class SourceCodeResponseSchema(BaseModel):
     user_id: int
     problem_id: int
     status: int
-    submit_time: str
+    submit_time: datetime
     score: int
-    verdict: str
+    verdict: List[dict]
     message: str

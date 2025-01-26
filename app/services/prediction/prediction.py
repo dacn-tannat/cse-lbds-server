@@ -1,5 +1,4 @@
 import torch
-from torch.nn import DataParallel
 
 from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
@@ -67,8 +66,21 @@ class PredictionService:
 
             if output_token_prob not in top_predictions:
                 incorrect_pred.append({
-                    'location': i,
-                    'real_token': output_token_prob,
-                    'suggest': predictions[0]
+                    'position': i,
+                    'correct_probability': output_token_prob[2],
+                    'original_token': output_token_prob,
+                    'predicted_tokens': predictions[0]
                 })
-        return incorrect_pred
+
+        sorted_incorrect_pred = sorted(incorrect_pred, key=lambda x: x['correct_probability'])
+        top_10_incorrect = sorted_incorrect_pred[:10]
+        sorted_top_10_incorrect = sorted(top_10_incorrect, key=lambda x: x['position'])
+        result = []
+        for i, incorrect in enumerate(sorted_top_10_incorrect):
+            result.append({
+                'id': i,
+                'position': incorrect['position'],
+                'original_token': incorrect['original_token'][0],
+                'predicted_token': incorrect['predicted_tokens'][0]
+            })
+        return result
