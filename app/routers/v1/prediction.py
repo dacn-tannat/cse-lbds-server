@@ -8,7 +8,7 @@ from app.services.prediction.prediction import PredictionService
 from app.services.source_code import SourceCodeService
 
 # Load the .env file
-load_dotenv('.env.development')
+load_dotenv('.env')
 
 predictionRouter = APIRouter()
 model_path = os.getenv("PREDICTION_MODEL_PATH")

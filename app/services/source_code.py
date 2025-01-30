@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 # Load the .env file
-load_dotenv('.env.development')
+load_dotenv('.env')
 
 # Access the variables
 jobe_url = os.getenv("JOBE_URL") + 'runs'

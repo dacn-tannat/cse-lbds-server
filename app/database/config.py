@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 # Load the .env file
-load_dotenv('.env.development')
+load_dotenv('.env')
 
 # Access the variables
 database_url = os.getenv("SQLALCHEMY_DATABASE_URL")
