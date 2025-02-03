@@ -18,7 +18,8 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://cse-lbds.site"],
+    # allow_origins=["http://localhost:3000", "https://cse-lbds.site"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,6 +31,6 @@ app.include_router(predictionRouter, prefix='/api/v1/prediction')
 
 @app.get('/')
 def home():
-    return RedirectResponse(url='/docs')
+    return { 'message': 'home' }
 
 # uvicorn app.main:app --host 0.0.0.0 --port 8000
