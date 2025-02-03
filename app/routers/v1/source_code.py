@@ -22,17 +22,8 @@ def get_source_codes(db: Session = Depends(get_db)):
 async def create_source_code(source_code_request: SourceCodeRequestSchema, db: Session = Depends(get_db)):
     try:
         problem = ProblemService(db).get_by_id(source_code_request.problem_id)
-        output = await SourceCodeService(db).submit(source_code_request.source_code, problem.testcase)
-        source_code = SourceCode(
-            problem_id=source_code_request.problem_id,
-            source_code=source_code_request.source_code,
-            status=output['status'],
-            submit_time=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')),
-            score=output.get('score', None),
-            verdict=output.get('verdict', None),
-            user_id=0
-        )
-        SourceCodeService(db).create(source_code, db)
+        source_code, output = await SourceCodeService(db).create_submission(source_code_request, problem)
+        
         return SourceCodeResponseSchema(
             source_code_id=source_code.id,
             source_code=source_code.source_code,
