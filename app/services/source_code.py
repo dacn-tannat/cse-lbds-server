@@ -1,5 +1,7 @@
+from datetime import datetime
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+import pytz
+from app.database.models.source_code import SourceCode
 from app.database.repositories.source_code import SourceCodeRepository
 import httpx
 from dotenv import load_dotenv
@@ -24,11 +26,8 @@ class SourceCodeService:
     def get_all(self):
         return self.__source_code_repository.get_all()
     
-    def create(self, source_code, db: Session):
-        db.add(source_code)
-        db.commit()
-        db.refresh(source_code)
-        return source_code
+    def create(self, source_code):
+        self.__source_code_repository.create(source_code)
 
     async def submit(self, source_code, testcase):
         status = 4
@@ -38,8 +37,8 @@ class SourceCodeService:
         for test in testcase:
             payload = {
                 "run_spec": {
-                    "language_id": "cpp",
-                    "sourcefilename": "main.cpp",
+                    "language_id": "c",
+                    "sourcefilename": "main.c",
                     "sourcecode": source_code,
                     "input": test['input'],
                 }
@@ -99,4 +98,15 @@ class SourceCodeService:
             "message": message
         }
         
-        
+    async def create_submission(self, source_code_request, problem):
+        output = await self.submit(source_code_request.source_code, problem.testcase)
+        source_code = SourceCode(
+            problem_id=source_code_request.problem_id,
+            source_code=source_code_request.source_code,
+            status=output['status'],
+            submit_time=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')),
+            score=output.get('score', None),
+            verdict=output.get('verdict', None),
+            user_id=0
+        )
+        return self.__source_code_repository.create(source_code), output

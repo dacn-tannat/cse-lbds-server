@@ -1,3 +1,4 @@
+import re
 import ply.lex as lex
 import sys
 from pygments.lexers import CLexer
@@ -16,36 +17,40 @@ class CustomCLexer:
         token_by_lib = self.token_by_pygment_library(input_string)
         res_list = []
         for token_pair in token_by_lib:
+            tokens = []
             if token_pair[0] == Token.Name.Function:
-                tokens = self.tokenize_by_custom_rule(token_pair[1], "FUNCTION")
+                tokens = self.tokenize_by_custom_rule(token_pair[1], token_pair[2], "FUNCTION")
                 self.func_list.append(token_pair[1])
             elif token_pair[0] == Token.Name and token_pair[1] in self.func_list:
-                tokens = self.tokenize_by_custom_rule(token_pair[1], "FUNCTION")
+                tokens = self.tokenize_by_custom_rule(token_pair[1], token_pair[2], "FUNCTION")
             elif token_pair[0] == Token.Name:
-                tokens = self.tokenize_by_custom_rule(token_pair[1], "VARIABLE")
-            elif token_pair[0] == Token.Comment.Preproc and token_pair[1].startswith("define",0,6):
-                words = token_pair[1].split()
-                tokens = []
-                for index, word in enumerate(words):
-                    if index == 1:
-                        tokens += self.tokenize_by_custom_rule(word, "VARIABLE")
+                tokens = self.tokenize_by_custom_rule(token_pair[1], token_pair[2], "VARIABLE")
+            elif token_pair[0] == Token.Comment.Preproc and token_pair[1].startswith("define", 0, 6):
+                # Dùng regex để tìm các từ và toán tử, giữ nguyên vị trí
+                for match in re.finditer(r'\S+', token_pair[1]):  # \S+ tìm từng từ không phải khoảng trắng
+                    word = match.group()
+                    word_index = token_pair[2] + match.start()  # Lấy vị trí chính xác của từ trong chuỗi gốc
+                    
+                    if len(tokens) == 1:  # Token thứ hai là VARIABLE
+                        tokens += self.tokenize_by_custom_rule(word, word_index, "VARIABLE")
                     else:
-                        tokens += self.tokenize_by_custom_rule(word)
+                        tokens += self.tokenize_by_custom_rule(word, word_index)
             else:
-                tokens = self.tokenize_by_custom_rule(token_pair[1])
+                tokens = self.tokenize_by_custom_rule(token_pair[1], token_pair[2])
             for token in tokens:
                 # Tách character từ word
                 if token[0] == "IDENTIFIER":
+                    index = token[2]
                     char_list = list(map(str, token[1]))
-                    new_tokens = [("IDENTIFIER", char) for char in char_list]
+                    new_tokens = [["IDENTIFIER", char, index + i] for i, char in enumerate(char_list)]
                     res_list += new_tokens
                 else:
                     res_list.append(token)
         return res_list
         
-    def tokenize_by_custom_rule(self, input_string, type=""):
+    def tokenize_by_custom_rule(self, input_string, index, type=""):
         if type != "": 
-            return [(type, input_string)]
+            return [[type, input_string, index]]
         self.lexer.input(input_string)
         tokens_list = []
         while True:
@@ -53,12 +58,16 @@ class CustomCLexer:
             if not tok: 
                 break
             tokens_list.append(tok)
-        return [(token.type, token.value) for token in tokens_list]
+        return [[token.type, token.value, index + token.lexpos] for token in tokens_list]
 
     def token_by_pygment_library(self, code):
         lexer = CLexer()
         tokens = list(pylex(code, lexer))
-        return tokens
+        index = 0
+        for token in tokens:
+            start_index = index
+            index = start_index + len(token[1])
+            yield token[0], token[1], start_index
 
     def reset_error_set(self):
         self.error_characters = set()

@@ -1,17 +1,22 @@
 import torch
 
+from app.database.models.prediction import Prediction
+from app.database.repositories.prediction import PredictionRepository
 from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
 from app.services.prediction.model import BiLSTMModel
 
 class PredictionService:
-    def __init__(self, model_path, seq_length, vocab_size, embed_size, hidden_size, num_layers, dropout):
-        self.seq_length = seq_length
-        self.model = BiLSTMModel(vocab_size=vocab_size, embed_size=embed_size, hidden_size=hidden_size, num_layers=num_layers, dropout=dropout)
+    def __init__(self, db, model):
+        self.model_config = model
+        self.seq_length = model.hyperparameter['seq_length']
+        if model.model_type == 'BiLSTM':
+            self.model = BiLSTMModel(vocab_size=model.hyperparameter['vocab_size'], embed_size=model.hyperparameter['embed_size'], hidden_size=model.hyperparameter['hidden_size'], num_layers=model.hyperparameter['num_layers'], dropout=model.hyperparameter['dropout'])
         # self.model = DataParallel(self.model)
         # Load weight for correct model
-        self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        self.model.load_state_dict(torch.load(model.model_path, map_location=torch.device('cpu')))
         self.model.eval()
+        self.__prediction_repository = PredictionRepository(db)
     
     def predict_all_tokens(self, input_seq):
         '''
@@ -44,7 +49,7 @@ class PredictionService:
         lexer, encoder = CustomCLexer(), CTokenEncoder()
         # Tokenize and encode src_code
         raw_tokens = lexer.tokenize(source_code)
-        encoded_tokens = encoder.encode_tokens(raw_tokens)
+        encoded_tokens, encoded_tokens_with_index = encoder.encode_tokens(raw_tokens)
         id_to_token = encoder.get_vocab_id_to_token() # map from id -> token
         
         padded_encoded_tokens = [0] * self.seq_length + encoded_tokens # Padding
@@ -58,15 +63,13 @@ class PredictionService:
                 (id_to_token.get(pred[0], pred[0]), pred[0], pred[1])
                 for pred in predictions
             ] # list of (token, id, prob)
-            
-            # Get predictions which prob is > 0.1
-            top_predictions = [pred for pred in predictions if pred[2] > 0.01] #  list of (token, id, prob) but prob > 0.1
-            
+              
             output_token_prob = next((pred for pred in predictions if pred[1] == output), None)
 
-            if output_token_prob not in top_predictions:
+            if output_token_prob is not None and output_token_prob[2] < 0.1:
                 incorrect_pred.append({
                     'position': i,
+                    'start_index': encoded_tokens_with_index[i][1],
                     'correct_probability': output_token_prob[2],
                     'original_token': output_token_prob,
                     'predicted_tokens': predictions[0]
@@ -80,7 +83,16 @@ class PredictionService:
             result.append({
                 'id': i,
                 'position': incorrect['position'],
+                'start_index': incorrect['start_index'],
                 'original_token': incorrect['original_token'][0],
                 'predicted_token': incorrect['predicted_tokens'][0]
             })
         return result
+    
+    def create_prediction(self, source_code):
+        buggy_position = self.predict(source_code.source_code)
+        return self.__prediction_repository.create(Prediction(
+            model_id=self.model_config.id,
+            source_code_id=source_code.id,
+            buggy_position=buggy_position
+        ))

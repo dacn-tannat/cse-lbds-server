@@ -51,7 +51,8 @@ class CTokenEncoder:
     
     def encode_tokens(self, token_list):
         encoded_tokens = []
-        for token_type, token_value in token_list:
+        encoded_tokens_with_index = []
+        for token_type, token_value, token_pos in token_list:
             # Function:
             if token_type == 'FUNCTION':
                 # Function name already exists
@@ -91,7 +92,8 @@ class CTokenEncoder:
             # Undefined case???
             else:
                 encoded_tokens.append(-1)
-        return encoded_tokens
+            encoded_tokens_with_index.append((encoded_tokens[-1], token_pos))
+        return encoded_tokens, encoded_tokens_with_index
 
     def reset_id(self):
         '''
