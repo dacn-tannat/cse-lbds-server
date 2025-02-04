@@ -1,12 +1,14 @@
 import torch
 
+from app.database.models.buggy_position import BuggyPosition
 from app.database.models.prediction import Prediction
+from app.database.repositories.buggy_position import BuggyPositionRepository
 from app.database.repositories.prediction import PredictionRepository
 from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
 from app.services.prediction.model import BiLSTMModel
 
-class PredictionService:
+class ModelPredictionService:
     def __init__(self, db, model):
         self.model_config = model
         self.seq_length = model.hyperparameter['seq_length']
@@ -17,6 +19,7 @@ class PredictionService:
         self.model.load_state_dict(torch.load(model.model_path, map_location=torch.device('cpu')))
         self.model.eval()
         self.__prediction_repository = PredictionRepository(db)
+        self.__buggy_position_repository = BuggyPositionRepository(db)
     
     def predict_all_tokens(self, input_seq):
         '''
@@ -85,14 +88,25 @@ class PredictionService:
                 'position': incorrect['position'],
                 'start_index': incorrect['start_index'],
                 'original_token': incorrect['original_token'][0],
-                'predicted_token': incorrect['predicted_tokens'][0]
+                'predicted_token': incorrect['predicted_tokens'][0],
+                'is_used': False
             })
         return result
     
     def create_prediction(self, source_code):
         buggy_position = self.predict(source_code.source_code)
-        return self.__prediction_repository.create(Prediction(
+        prediction = self.__prediction_repository.create(Prediction(
             model_id=self.model_config.id,
-            source_code_id=source_code.id,
-            buggy_position=buggy_position
+            source_code_id=source_code.id
         ))
+
+        for pos in buggy_position:
+            pos['prediction_id'] = prediction.id
+            self.__buggy_position_repository.create(BuggyPosition(**pos))
+
+        return {
+            'id': prediction.id,
+            'model_id': prediction.model_id,
+            'source_code_id': prediction.source_code_id,
+            'buggy_position': buggy_position
+        }

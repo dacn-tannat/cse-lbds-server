@@ -17,7 +17,11 @@ class BaseRepository:
         self.db.refresh(entity)
         return entity
 
-    def update(self, entity):
+    def update(self, entity_id, new_data):
+        entity = self.db.query(self.model).filter(self.model.id == entity_id).first()
+        for key, value in new_data.items():
+            setattr(entity, key, value)
+        self.db.flush()
         self.db.commit()
         self.db.refresh(entity)
         return entity
