@@ -1,4 +1,4 @@
-from requests import Session
+from sqlalchemy.orm import Session
 from app.database.models.buggy_position import BuggyPosition
 from app.database.repositories.base import BaseRepository
 
