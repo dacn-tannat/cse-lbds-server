@@ -13,6 +13,7 @@ predictionRouter = APIRouter()
 
 @predictionRouter.post('/{source_code_id}')
 def predict(source_code_id: int, db: Session = Depends(get_db)):
+    """API nhận source code id và trả về kết quả dự đoán dự đoán lỗi và gợi ý điều chỉnh trên mã nguồn đó."""
     try:
         user_id = 0
         source_code = SourceCodeService(db).get_by_id(source_code_id)
@@ -25,6 +26,7 @@ def predict(source_code_id: int, db: Session = Depends(get_db)):
     
 @predictionRouter.put('/bug-check')
 def bug_check(request: BugCheckRequestSchema, db: Session = Depends(get_db)):
+    """API nhận các lỗi được đánh dấu và lưu thông tin này vào db."""
     try:
         return BuggyPositionService(db).bug_check(request.prediction_id, request.position)
     except Exception as e:
