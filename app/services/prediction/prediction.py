@@ -1,19 +1,20 @@
+from typing import List
 import torch
 
 from app.database.models.buggy_position import BuggyPosition
 from app.database.models.prediction import Prediction
 from app.database.repositories.buggy_position import BuggyPositionRepository
 from app.database.repositories.prediction import PredictionRepository
+from app.database.schemas.prediction import BugCheckResponseSchema, BuggyPositionSchema
 from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
 from app.services.prediction.model import BiLSTMModel
 
-class ModelPredictionService:
+class BiLSTMPredictionService:
     def __init__(self, db, model):
         self.model_config = model
         self.seq_length = model.hyperparameter['seq_length']
-        if model.model_type == 'BiLSTM':
-            self.model = BiLSTMModel(vocab_size=model.hyperparameter['vocab_size'], embed_size=model.hyperparameter['embed_size'], hidden_size=model.hyperparameter['hidden_size'], num_layers=model.hyperparameter['num_layers'], dropout=model.hyperparameter['dropout'])
+        self.model = BiLSTMModel(vocab_size=model.hyperparameter['vocab_size'], embed_size=model.hyperparameter['embed_size'], hidden_size=model.hyperparameter['hidden_size'], num_layers=model.hyperparameter['num_layers'], dropout=model.hyperparameter['dropout'])
         # self.model = DataParallel(self.model)
         # Load weight for correct model
         self.model.load_state_dict(torch.load(model.model_path, map_location=torch.device('cpu')))
@@ -48,7 +49,7 @@ class ModelPredictionService:
             targets.append(input[i+seq_length])
         return inputs, targets
         
-    def predict(self, source_code):
+    def predict(self, source_code) -> List[BuggyPositionSchema]:
         lexer, encoder = CustomCLexer(), CTokenEncoder()
         # Tokenize and encode src_code
         raw_tokens = lexer.tokenize(source_code)
@@ -83,17 +84,17 @@ class ModelPredictionService:
         sorted_top_10_incorrect = sorted(top_10_incorrect, key=lambda x: x['position'])
         result = []
         for i, incorrect in enumerate(sorted_top_10_incorrect):
-            result.append({
-                'id': i,
-                'position': incorrect['position'],
-                'start_index': incorrect['start_index'],
-                'original_token': incorrect['original_token'][0],
-                'predicted_token': incorrect['predicted_tokens'][0],
-                'is_used': False
-            })
+            result.append(BuggyPositionSchema(
+                id=i,
+                position=incorrect['position'],
+                start_index=incorrect['start_index'],
+                original_token=incorrect['original_token'][0],
+                predicted_token=incorrect['predicted_tokens'][0],
+                is_used=False
+            ))
         return result
     
-    def create_prediction(self, source_code):
+    def create_prediction(self, source_code) -> BugCheckResponseSchema:
         buggy_position = self.predict(source_code.source_code)
         prediction = self.__prediction_repository.create(Prediction(
             model_id=self.model_config.id,
@@ -101,12 +102,14 @@ class ModelPredictionService:
         ))
 
         for pos in buggy_position:
-            pos['prediction_id'] = prediction.id
-            self.__buggy_position_repository.create(BuggyPosition(**pos))
+            pos_dict = pos.model_dump()  # Chuyển Pydantic Model thành dictionary
+            pos_dict["prediction_id"] = prediction.id  # Thêm field mới
+            self.__buggy_position_repository.create(BuggyPosition(**pos_dict))  # Chuyển thành BuggyPosition
 
-        return {
-            'id': prediction.id,
-            'model_id': prediction.model_id,
-            'source_code_id': prediction.source_code_id,
-            'buggy_position': buggy_position
-        }
+
+        return BugCheckResponseSchema(
+            id=prediction.id,
+            model_id=prediction.model_id,
+            source_code_id=prediction.source_code_id,
+            buggy_position=buggy_position
+        )

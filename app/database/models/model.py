@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, ForeignKey, Integer, Text
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, Text, func
 from app.database.config import Base
 
 class Model(Base):
@@ -9,6 +9,8 @@ class Model(Base):
     model_path = Column(Text, nullable=False)
     hyperparameter = Column(JSON, nullable=True)
     problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    modified_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     def __repr__(self):
         return f"<Model(id={self.id} model_type='{self.model_type}'>"

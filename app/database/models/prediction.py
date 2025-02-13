@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, func
 from app.database.config import Base
 
 class Prediction(Base):
@@ -7,6 +7,8 @@ class Prediction(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     model_id = Column(Integer, ForeignKey('model.id'), nullable=False)
     source_code_id = Column(Integer, ForeignKey('source_code.id'), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    modified_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     def __repr__(self):
         return f"<Prediction(id={self.id} model={self.model_id} source_code={self.source_code_id}>"

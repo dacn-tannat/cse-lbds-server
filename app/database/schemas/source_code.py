@@ -12,7 +12,11 @@ class SourceCodeResponseSchema(BaseModel):
     user_id: int
     problem_id: int
     status: int
-    submit_time: datetime
     score: int
-    verdict: List[dict]
+    test_case_sample: List['TestCaseSchema']
     message: str
+
+class TestCaseSchema(BaseModel):
+    input: str
+    output: str
+    is_correct: bool
