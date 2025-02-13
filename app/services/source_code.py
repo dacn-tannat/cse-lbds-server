@@ -1,11 +1,14 @@
 from datetime import datetime
 from fastapi import HTTPException
 import pytz
+from app.database.models.problem import Problem
 from app.database.models.source_code import SourceCode
 from app.database.repositories.source_code import SourceCodeRepository
 import httpx
 from dotenv import load_dotenv
 import os
+
+from app.database.schemas.source_code import SourceCodeRequestSchema
 
 # Load the .env file
 load_dotenv('.env')
@@ -98,13 +101,12 @@ class SourceCodeService:
             "message": message
         }
         
-    async def create_submission(self, source_code_request, problem):
+    async def create_submission(self, source_code_request: SourceCodeRequestSchema, problem: Problem):
         output = await self.submit(source_code_request.source_code, problem.testcase)
         source_code = SourceCode(
             problem_id=source_code_request.problem_id,
             source_code=source_code_request.source_code,
             status=output['status'],
-            submit_time=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')),
             score=output.get('score', None),
             verdict=output.get('verdict', None),
             user_id=0

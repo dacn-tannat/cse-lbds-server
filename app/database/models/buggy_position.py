@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, PrimaryKeyConstraint, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, PrimaryKeyConstraint, Text, func
 from app.database.config import Base
 
 
@@ -12,6 +12,8 @@ class BuggyPosition(Base):
     original_token = Column(Text, nullable=False)
     predicted_token = Column(Text, nullable=False)
     is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    modified_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     __table_args__ = (
         PrimaryKeyConstraint('id', 'prediction_id'),  # Định nghĩa Composite Key
