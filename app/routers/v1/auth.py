@@ -14,7 +14,9 @@ async def login_google(data: dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='Code not provided')
 
     # Get user_info from Google
-    user_info = AuthService().get_user_info_from_google(code)
+    user_info = await AuthService().get_user_info_from_google(code)
+    
+    print(user_info)
     
     # Create new user in case 
     user_service = UserService(db)
