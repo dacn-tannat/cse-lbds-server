@@ -26,11 +26,11 @@ class AuthService:
             token_response = await client.post(
                 'https://oauth2.googleapis.com/token',
                 data={
-                    'client_id': cls.GOOGLE_CLIENT_ID,
-                    'client_secret': cls.GOOGLE_CLIENT_SECRET,
+                    'client_id': GOOGLE_CLIENT_ID,
+                    'client_secret': GOOGLE_CLIENT_SECRET,
                     'code': code,
                     'grant_type': "authorization_code",
-                    'redirect_uri': cls.GOOGLE_REDIRECT_URI
+                    'redirect_uri': GOOGLE_REDIRECT_URI
                 },
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
