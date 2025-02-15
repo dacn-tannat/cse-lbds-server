@@ -1,17 +1,21 @@
 from typing import List
+from fastapi import HTTPException
 import torch
 
 from app.database.models.buggy_position import BuggyPosition
+from app.database.models.model import Model
 from app.database.models.prediction import Prediction
+from app.database.models.source_code import SourceCode
 from app.database.repositories.buggy_position import BuggyPositionRepository
 from app.database.repositories.prediction import PredictionRepository
-from app.database.schemas.prediction import BugCheckResponseSchema, BuggyPositionSchema
+from app.database.schemas.prediction import BugPositionResponseSchema, BuggyPositionSchema
 from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
 from app.services.prediction.model import BiLSTMModel
+from app.services.source_code import SourceCodeService
 
 class BiLSTMPredictionService:
-    def __init__(self, db, model):
+    def __init__(self, db, model: Model):
         self.model_config = model
         self.seq_length = model.hyperparameter['seq_length']
         self.model = BiLSTMModel(vocab_size=model.hyperparameter['vocab_size'], embed_size=model.hyperparameter['embed_size'], hidden_size=model.hyperparameter['hidden_size'], num_layers=model.hyperparameter['num_layers'], dropout=model.hyperparameter['dropout'])
@@ -94,7 +98,7 @@ class BiLSTMPredictionService:
             ))
         return result
     
-    def create_prediction(self, source_code) -> BugCheckResponseSchema:
+    def create_prediction(self, source_code: SourceCode) -> BugPositionResponseSchema:
         buggy_position = self.predict(source_code.source_code)
         prediction = self.__prediction_repository.create(Prediction(
             model_id=self.model_config.id,
@@ -107,9 +111,28 @@ class BiLSTMPredictionService:
             self.__buggy_position_repository.create(BuggyPosition(**pos_dict))  # Chuyển thành BuggyPosition
 
 
-        return BugCheckResponseSchema(
+        return BugPositionResponseSchema(
             id=prediction.id,
             model_id=prediction.model_id,
             source_code_id=prediction.source_code_id,
             buggy_position=buggy_position
         )
+    
+class PredictionService:
+    def __init__(self, db):
+        self.db = db
+        self.__prediction_repository = PredictionRepository(db)
+
+    def get_by_id(self, id) -> Prediction:
+        prediction = self.__prediction_repository.get_by_id(id)
+        if prediction is None:
+            raise HTTPException(status_code=404, detail='Prediction not found')
+        return prediction
+    
+    def validate_prediction(self, prediction_id, user_id) -> bool:
+        prediction = self.get_by_id(prediction_id)
+        source_code = SourceCodeService(self.db).get_by_id(prediction.source_code_id)
+        if source_code.user_id != user_id:
+            raise HTTPException(status_code=401, detail='Cannot access this source code.')
+        
+        return True

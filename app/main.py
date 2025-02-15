@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from app.database.init_db import create_tables
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database.schemas.generic_response import GenericResponse
 from app.routers.v1.problem import problemRouter
 from app.routers.v1.source_code import sourceCodeRouter
 from app.routers.v1.prediction import predictionRouter
@@ -35,14 +36,12 @@ app.include_router(predictionRouter, prefix='/api/v1/prediction')
 def home():
     return { 'message': 'home' }
 
-@app.get("/login")
-async def login(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
-
 @app.post('/auth/google-login')
 async def google_login(user_data: dict = Depends(verify_google_token)):
     """FE gửi Google token_id lên, API trả về access_id"""
-    return {"access_token": user_data["access_token"]}
+    return GenericResponse(data={
+        "access_token": user_data["access_token"]
+    })
 
 
 # uvicorn app.main:app --host 0.0.0.0 --port 8000

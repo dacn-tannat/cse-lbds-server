@@ -1,11 +1,13 @@
 from typing import List
 from pydantic import BaseModel
 
+from app.database.models.buggy_position import BuggyPosition
+
 class BugCheckRequestSchema(BaseModel):
     prediction_id: int
     position: List[int]
 
-class BugCheckResponseSchema(BaseModel):
+class BugPositionResponseSchema(BaseModel):
     id: int
     model_id: int
     source_code_id: int
@@ -18,3 +20,6 @@ class BuggyPositionSchema(BaseModel):
     original_token: str
     predicted_token: str
     is_used: bool
+
+class BuggyCheckResponseSchema(BaseModel):
+    buggy_list: List['BuggyPositionSchema']

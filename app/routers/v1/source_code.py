@@ -1,31 +1,22 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from datetime import datetime
-import pytz
 from sqlalchemy.orm import Session
+from app.auth.google_auth import get_current_user
 from app.database.config import get_db
 from app.database.models.problem import Problem
-from app.database.models.source_code import SourceCode
+from app.database.schemas.generic_response import GenericResponse
 from app.services.source_code import SourceCodeService
 from app.database.schemas.source_code import SourceCodeRequestSchema, SourceCodeResponseSchema, TestCaseSchema
 from app.services.problem import ProblemService
 
 sourceCodeRouter = APIRouter()
 
-# @sourceCodeRouter.get('/')
-# def get_source_codes(db: Session = Depends(get_db)):
-#     try:
-#         return SourceCodeService(db).get_all()
-#     except Exception as e:
-#         print(e)
-#         raise e
-
-@sourceCodeRouter.post('/submit', response_model=SourceCodeResponseSchema)
-async def create_source_code(source_code_request: SourceCodeRequestSchema, db: Session = Depends(get_db)):
+@sourceCodeRouter.post('/submit', response_model=GenericResponse[SourceCodeResponseSchema])
+async def create_source_code(source_code_request: SourceCodeRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """API nhận source code và trả về kết quả chạy mã nguồn bằng C compiler."""
     try:
         problem: Problem = ProblemService(db).get_by_id(source_code_request.problem_id)
-        source_code, output = await SourceCodeService(db).create_submission(source_code_request, problem)
+        source_code, output = await SourceCodeService(db).create_submission(source_code_request, problem, user['sub'])
 
         verdict = source_code.verdict
         examples: List[TestCaseSchema] = []
@@ -39,7 +30,7 @@ async def create_source_code(source_code_request: SourceCodeRequestSchema, db: S
                         is_correct=verdict_item['status']
                     ))
         
-        return SourceCodeResponseSchema(
+        source_code =  SourceCodeResponseSchema(
             source_code_id=source_code.id,
             source_code=source_code.source_code,
             user_id=source_code.user_id,
@@ -49,6 +40,7 @@ async def create_source_code(source_code_request: SourceCodeRequestSchema, db: S
             test_case_sample=examples,
             message=output.get('message', None)
         )
+
+        return GenericResponse(data=source_code)
     except Exception as e:
-        print(e)
         raise e
