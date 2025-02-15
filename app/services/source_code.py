@@ -97,7 +97,7 @@ class SourceCodeService:
         return {
             "status": status,
             "verdict": verdict,
-            "score": score,
+            "score": score/len(testcase),
             "message": message
         }
         
