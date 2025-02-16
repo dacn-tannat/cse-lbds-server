@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.config import get_db
 from app.database.schemas.problem import ProblemOverviewResponseSchema, ProblemResponseSchema
 from app.services.problem import ProblemService
-from app.auth.google_auth import get_current_user
-
+from app.services.auth import AuthService
 problemRouter = APIRouter()
 
 @problemRouter.get('/active', response_model=List[ProblemOverviewResponseSchema])
@@ -28,7 +27,7 @@ def get_problem_by_id(id: int, db: Session = Depends(get_db)):
         raise e
     
 @problemRouter.get('/protected/{id}')
-def get_problem_by_id(id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_problem_by_id(id: int, user: dict = Depends(AuthService().get_current_user), db: Session = Depends(get_db)):
     """API lấy thông tin của một problem bằng id."""
     try:
         return ProblemService(db).get_problem(id)

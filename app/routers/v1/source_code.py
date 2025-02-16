@@ -1,7 +1,5 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from datetime import datetime
-import pytz
 from sqlalchemy.orm import Session
 from app.database.config import get_db
 from app.database.models.problem import Problem
