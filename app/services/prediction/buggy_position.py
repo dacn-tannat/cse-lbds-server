@@ -1,5 +1,6 @@
-from typing import List
+from typing import Iterator, List
 
+from app.database.models.buggy_position import BuggyPosition
 from app.database.repositories.buggy_position import BuggyPositionRepository
 
 
@@ -7,7 +8,7 @@ class BuggyPositionService:
     def __init__(self, db):
         self.__buggy_position_repository = BuggyPositionRepository(db)
     
-    def bug_check(self, prediction_id, position: List[int]):
+    def bug_check(self, prediction_id, position: List[int]) -> Iterator[BuggyPosition]:
         try:
             buggy_position_list = self.__buggy_position_repository.get_by_prediction_id(prediction_id)
 

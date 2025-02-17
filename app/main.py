@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from app.database.init_db import create_tables
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database.schemas.generic_response import GenericResponse
 from app.routers.v1.problem import problemRouter
 from app.routers.v1.source_code import sourceCodeRouter
 from app.routers.v1.prediction import predictionRouter
@@ -33,5 +34,6 @@ app.include_router(authRouter, prefix='/api/v1/auth')
 @app.get('/')
 def home():
     return { 'message': 'home' }
+
 
 # uvicorn app.main:app --host 0.0.0.0 --port 8000

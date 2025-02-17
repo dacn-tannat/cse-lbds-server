@@ -16,6 +16,8 @@ class ProblemService:
     
     def get_problem(self, id) -> ProblemResponseSchema:
         problem: Problem = self.__problem_repository.get_by_id(id)
+        if problem is None:
+            raise HTTPException(status_code=404, detail='Problem not found')
         examples = []
         for testcase in problem.testcase:
             if testcase['is_example']:
