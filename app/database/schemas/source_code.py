@@ -12,7 +12,7 @@ class SourceCodeResponseSchema(BaseModel):
     user_id: int
     problem_id: int
     status: int
-    score: int
+    score: float
     test_case_sample: List['TestCaseSchema']
     message: str
 

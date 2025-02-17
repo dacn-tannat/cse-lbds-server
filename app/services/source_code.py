@@ -20,7 +20,7 @@ class SourceCodeService:
     def __init__(self, db):
         self.__source_code_repository = SourceCodeRepository(db)
 
-    def get_by_id(self, id):
+    def get_by_id(self, id) -> SourceCode:
         source_code = self.__source_code_repository.get_by_id(id)
         if source_code is None:
             raise HTTPException(status_code=404, detail='Code not found')
@@ -52,7 +52,7 @@ class SourceCodeService:
                     response = await client.post(jobe_url, json=payload)
             except Exception as e:
                 print(e)
-                raise HTTPException(status_code=500, detail='Error when sending request to Jobe API')
+                raise HTTPException(status_code=500, detail='Error when sending request to Jobe server')
     
             if response.status_code == 200:
                 response_data = response.json()
@@ -90,18 +90,16 @@ class SourceCodeService:
                     status = 3
                     message = response_data['stderr']
                     break
-            print('Error when sending request to Jobe API')
-            print(response.text)
-            return HTTPException(status_code=500, detail='Error when sending request to Jobe API')
+            return HTTPException(status_code=500, detail='Error when sending request to Jobe server')
 
         return {
             "status": status,
             "verdict": verdict,
-            "score": score,
+            "score": score/len(testcase),
             "message": message
         }
         
-    async def create_submission(self, source_code_request: SourceCodeRequestSchema, problem: Problem):
+    async def create_submission(self, source_code_request: SourceCodeRequestSchema, problem: Problem, user_id: str):
         output = await self.submit(source_code_request.source_code, problem.testcase)
         source_code = SourceCode(
             problem_id=source_code_request.problem_id,
@@ -109,6 +107,6 @@ class SourceCodeService:
             status=output['status'],
             score=output.get('score', None),
             verdict=output.get('verdict', None),
-            user_id=0
+            user_id=user_id
         )
         return self.__source_code_repository.create(source_code), output

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
+from app.database.schemas.generic_response import GenericResponse
 from app.services.user import UserService
 from app.services.auth import AuthService
 from app.database.config import get_db
@@ -26,4 +27,4 @@ async def login_google(data: dict, db: Session = Depends(get_db)):
     # Create access token for user
     access_token = AuthService().create_access_token(user_info)
 
-    return {'access_token': access_token, 'user': user_info}
+    return GenericResponse(data={'access_token': access_token, 'user': user_info})
