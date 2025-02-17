@@ -37,7 +37,7 @@ def predict(source_code_id: int, user: dict = Depends(get_current_user), db: Ses
         print(e)
         raise e
     
-@predictionRouter.put('/bug-check', response_model=GenericResponse[BuggyCheckResponseSchema])
+@predictionRouter.put('/bug-check', response_model=GenericResponse[List[BuggyPositionSchema]])
 def bug_check(request: BugCheckRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """API nhận các lỗi được đánh dấu và lưu thông tin này vào db."""
     try:
@@ -53,7 +53,7 @@ def bug_check(request: BugCheckRequestSchema, user: dict = Depends(get_current_u
                 predicted_token=bug.predicted_token,
                 is_used=bug.is_used
             ))
-        return GenericResponse(data=BuggyCheckResponseSchema(buggy_list=result))
+        return GenericResponse(data=result)
     except Exception as e:
         print(e)
         raise e
