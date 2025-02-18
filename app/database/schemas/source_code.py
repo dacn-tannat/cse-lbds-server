@@ -9,7 +9,7 @@ class SourceCodeRequestSchema(BaseModel):
 class SourceCodeResponseSchema(BaseModel):
     source_code_id: int
     source_code: str
-    user_id: int
+    user_id: str
     problem_id: int
     status: int
     score: float
