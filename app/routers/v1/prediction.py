@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth.google_auth import get_current_user
+from app.services.auth import AuthService
 from app.database.config import get_db
 from app.database.models.model import Model
 from app.database.models.source_code import SourceCode
@@ -17,9 +17,10 @@ from app.services.prediction.prediction import BiLSTMPredictionService, Predicti
 from app.services.source_code import SourceCodeService
 
 predictionRouter = APIRouter()
+auth_service = AuthService()
 
 @predictionRouter.post('/{source_code_id}', response_model=GenericResponse[BugPositionResponseSchema])
-def predict(source_code_id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def predict(source_code_id: int, user: dict = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     """API nhận source code id và trả về kết quả dự đoán dự đoán lỗi và gợi ý điều chỉnh trên mã nguồn đó."""
     try:
         source_code: SourceCode = SourceCodeService(db).get_by_id(source_code_id)
@@ -38,7 +39,7 @@ def predict(source_code_id: int, user: dict = Depends(get_current_user), db: Ses
         raise e
     
 @predictionRouter.put('/bug-check', response_model=GenericResponse[List[BuggyPositionSchema]])
-def bug_check(request: BugCheckRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def bug_check(request: BugCheckRequestSchema, user: dict = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     """API nhận các lỗi được đánh dấu và lưu thông tin này vào db."""
     try:
         PredictionService(db).validate_prediction(request.prediction_id, user['sub'])

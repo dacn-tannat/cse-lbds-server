@@ -1,4 +1,5 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Security
+from fastapi.security import OAuth2AuthorizationCodeBearer
 import pytz
 from datetime import datetime, timedelta
 import jwt
@@ -14,6 +15,11 @@ GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')
 
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
+
+oauth2_scheme = OAuth2AuthorizationCodeBearer(
+    authorizationUrl="https://accounts.google.com/o/oauth2/auth?scope=email profile",
+    tokenUrl="https://oauth2.googleapis.com/token"
+)
 
 class AuthService:
     def __init__(self):
@@ -64,7 +70,7 @@ class AuthService:
         }
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-    def get_current_user(access_id: str):
+    def get_current_user(self, access_id: str = Security(oauth2_scheme)):
         """Giải mã access_id để lấy thông tin user"""
         try:
             payload = jwt.decode(access_id, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
