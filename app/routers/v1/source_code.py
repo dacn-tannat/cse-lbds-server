@@ -1,18 +1,20 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.auth.google_auth import get_current_user
+
 from app.database.config import get_db
 from app.database.models.problem import Problem
 from app.database.schemas.generic_response import GenericResponse
+from app.services.auth import AuthService
 from app.services.source_code import SourceCodeService
 from app.database.schemas.source_code import SourceCodeRequestSchema, SourceCodeResponseSchema, TestCaseSchema
 from app.services.problem import ProblemService
 
 sourceCodeRouter = APIRouter()
+auth_service = AuthService()
 
 @sourceCodeRouter.post('/submit', response_model=GenericResponse[SourceCodeResponseSchema])
-async def create_source_code(source_code_request: SourceCodeRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+async def create_source_code(source_code_request: SourceCodeRequestSchema, user: dict = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     """API nhận source code và trả về kết quả chạy mã nguồn bằng C compiler."""
     try:
         problem: Problem = ProblemService(db).get_by_id(source_code_request.problem_id)
