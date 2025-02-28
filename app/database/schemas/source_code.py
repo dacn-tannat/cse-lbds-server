@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 class SourceCodeRequestSchema(BaseModel):
@@ -13,10 +12,18 @@ class SourceCodeResponseSchema(BaseModel):
     problem_id: int
     status: int
     score: float
-    test_case_sample: List['TestCaseSchema']
+    test_case_sample: List['TestCaseSampleSchema']
     message: str
 
-class TestCaseSchema(BaseModel):
-    input: str
+class TestCaseSampleSchema(BaseModel):
+    input: Optional[str]
+    testcode: Optional[str]
     output: str
+    expected_output: str
     is_correct: bool
+
+class SourceCodeSubmitResponseSchema(BaseModel):
+    status: int
+    score: float
+    message: str
+    verdict: List[object]

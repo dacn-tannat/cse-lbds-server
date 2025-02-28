@@ -6,19 +6,20 @@ class ProblemResponseSchema(BaseModel):
     id: int
     name: str
     category: Optional[str] = None
-    lab_id: Optional[int] = None
+    lab_id: Optional[str] = None
     is_active: bool
     description: str
-    constrain: list[str]
+    constrain: Optional[list[str]]
     examples: list['TestCaseSchema']
 
 class TestCaseSchema(BaseModel):
-    input: str
+    input: Optional[str]
+    testcode: Optional[str]
     output: str
 
 class ProblemOverviewResponseSchema(BaseModel):
     id: int
     name: str
     category: Optional[str] = None
-    lab_id: Optional[int] = None
+    lab_id: Optional[str] = None
     is_active: bool

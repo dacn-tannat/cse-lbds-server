@@ -13,3 +13,12 @@ class BuggyPositionRepository(BaseRepository):
         if prediction is None:
             raise HTTPException(status_code=404, detail='Prediction not found')
         return prediction
+    
+    def update(self, id, prediction_id, data):
+        buggy_position = self.db.query(BuggyPosition).filter(BuggyPosition.id == id, BuggyPosition.prediction_id == prediction_id).first()
+        if buggy_position is None:
+            raise HTTPException(status_code=404, detail='Buggy position not found')
+        for key, value in data.items():
+            setattr(buggy_position, key, value)
+        self.db.commit()
+        return buggy_position

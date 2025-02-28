@@ -1,8 +1,9 @@
+from typing import List
 from app.database.models.problem import Problem
 from app.database.repositories.problem import ProblemRepository
 from fastapi import HTTPException
 
-from app.database.schemas.problem import ProblemResponseSchema
+from app.database.schemas.problem import ProblemResponseSchema, TestCaseSchema
 
 class ProblemService:
     def __init__(self, db):
@@ -18,13 +19,14 @@ class ProblemService:
         problem: Problem = self.__problem_repository.get_by_id(id)
         if problem is None:
             raise HTTPException(status_code=404, detail='Problem not found')
-        examples = []
+        examples: List[TestCaseSchema] = []
         for testcase in problem.testcase:
             if testcase['is_example']:
-                examples.append({
-                    'input': testcase['input'],
-                    'output': testcase['output']
-                })
+                examples.append(TestCaseSchema(
+                    testcode=testcase['testcode'],
+                    input=testcase['input'],
+                    output=testcase['output']
+                ))
         return ProblemResponseSchema(
             id=problem.id,
             name=problem.name,
