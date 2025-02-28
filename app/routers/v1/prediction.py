@@ -38,7 +38,7 @@ def predict(source_code_id: int, user: dict = Depends(get_current_user), db: Ses
         raise e
     
 @predictionRouter.put('/bug-check', response_model=GenericResponse[List[BuggyPositionSchema]])
-def token_error(request: BugCheckRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def bug_check(request: BugCheckRequestSchema, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """API nhận các lỗi được đánh dấu và lưu thông tin này vào db."""
     try:
         PredictionService(db).validate_prediction(request.prediction_id, user['sub'])
