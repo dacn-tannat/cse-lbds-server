@@ -13,6 +13,7 @@ from app.services.prediction.encoder import CTokenEncoder
 from app.services.prediction.lexer import CustomCLexer
 from app.services.prediction.model import BiLSTMModel
 from app.services.source_code import SourceCodeService
+from app.services.utils import UtilsService
 
 class BiLSTMPredictionService:
     def __init__(self, db, model: Model):
@@ -25,6 +26,7 @@ class BiLSTMPredictionService:
         self.model.eval()
         self.__prediction_repository = PredictionRepository(db)
         self.__buggy_position_repository = BuggyPositionRepository(db)
+        self.__utils_service = UtilsService()
     
     def predict_all_tokens(self, input_seq):
         '''
@@ -93,8 +95,10 @@ class BiLSTMPredictionService:
                 position=incorrect['position'],
                 start_index=incorrect['start_index'],
                 original_token=incorrect['original_token'][0],
-                predicted_token=incorrect['predicted_tokens'][0],
-                is_used=False
+                predicted_token=str(incorrect['predicted_tokens'][0]),
+                line_number=self.__utils_service.find_line_from_index(source_code, incorrect['start_index']),
+                is_token_error=False,
+                is_suggestion_useful=False
             ))
         return result
     

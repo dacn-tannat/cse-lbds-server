@@ -10,8 +10,10 @@ class Problem(Base):
     constrain = Column(ARRAY(Text), nullable=True)
     testcase = Column(ARRAY(JSON), nullable=True)
     category = Column(Text, nullable=True)
-    lab_id = Column(Integer, nullable=True)
+    lab_id = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=True)
+    template = Column(Text, nullable=False)
+    is_submited_once = Column(Boolean, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     modified_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

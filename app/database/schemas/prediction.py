@@ -1,10 +1,15 @@
+from enum import Enum
 from typing import List
 from pydantic import BaseModel
 
-from app.database.models.buggy_position import BuggyPosition
+
+class BugCheckType(Enum):
+    TOKEN_ERROR = 'TOKEN_ERROR'
+    SUGGESTION_USEFUL = 'SUGGESTION_USEFUL'
 
 class BugCheckRequestSchema(BaseModel):
     prediction_id: int
+    type: BugCheckType
     position: List[int]
 
 class BugPositionResponseSchema(BaseModel):
@@ -19,4 +24,6 @@ class BuggyPositionSchema(BaseModel):
     start_index: int
     original_token: str
     predicted_token: str
-    is_used: bool
+    line_number: int
+    is_token_error: bool
+    is_suggestion_useful: bool

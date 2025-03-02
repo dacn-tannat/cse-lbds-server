@@ -10,7 +10,7 @@ from app.database.models.model import Model
 from app.database.models.source_code import SourceCode
 from app.database.repositories.config import ConfigRepository
 from app.database.schemas.generic_response import GenericResponse
-from app.database.schemas.prediction import BugCheckRequestSchema, BugPositionResponseSchema, BuggyPositionSchema
+from app.database.schemas.prediction import BugCheckRequestSchema, BugCheckType, BugPositionResponseSchema, BuggyPositionSchema
 from app.services.model import ModelService
 from app.services.prediction.buggy_position import BuggyPositionService
 from app.services.prediction.prediction import BiLSTMPredictionService, PredictionService
@@ -43,18 +43,11 @@ def bug_check(request: BugCheckRequestSchema, user: dict = Depends(auth_service.
     """API nhận các lỗi được đánh dấu và lưu thông tin này vào db."""
     try:
         PredictionService(db).validate_prediction(request.prediction_id, user['sub'])
-        bug_list = list(BuggyPositionService(db).bug_check(request.prediction_id, request.position))
-        result: List[BuggyPositionSchema] = []
-        for bug in bug_list:
-            result.append(BuggyPositionSchema(
-                id=bug.id,
-                position=bug.position,
-                start_index=bug.start_index,
-                original_token=bug.original_token,
-                predicted_token=bug.predicted_token,
-                is_used=bug.is_used
-            ))
-        return GenericResponse(data=result)
+        if request.type == BugCheckType.TOKEN_ERROR:
+            bug_list = list(BuggyPositionService(db).token_error(request.prediction_id, request.position))
+        elif request.type == BugCheckType.SUGGESTION_USEFUL:
+            bug_list = list(BuggyPositionService(db).suggestion_useful(request.prediction_id, request.position))
+        return GenericResponse(data=bug_list)
     except Exception as e:
         print(e)
         raise e
