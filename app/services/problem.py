@@ -23,8 +23,8 @@ class ProblemService:
         for testcase in problem.testcase:
             if testcase['is_example']:
                 examples.append(TestCaseSchema(
-                    testcode=testcase['testcode'],
-                    input=testcase['input'],
+                    testcode=testcase.get('testcode', None),
+                    input=testcase.get('input', None),
                     output=testcase['output']
                 ))
         return ProblemResponseSchema(
