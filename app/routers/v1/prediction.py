@@ -12,7 +12,7 @@ from app.database.repositories.config import ConfigRepository
 from app.database.schemas.generic_response import GenericResponse
 from app.database.schemas.prediction import BugCheckRequestSchema, BugCheckType, BugPositionResponseSchema, BuggyPositionSchema
 from app.services.model import ModelService
-from app.services.prediction.buggy_position import BuggyPositionService
+from app.services.buggy_position import BuggyPositionService
 from app.services.prediction.prediction import BiLSTMPredictionService, PredictionService
 from app.services.source_code import SourceCodeService
 
