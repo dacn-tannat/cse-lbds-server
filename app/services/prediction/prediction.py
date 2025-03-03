@@ -9,8 +9,8 @@ from app.database.models.source_code import SourceCode
 from app.database.repositories.buggy_position import BuggyPositionRepository
 from app.database.repositories.prediction import PredictionRepository
 from app.database.schemas.prediction import BugPositionResponseSchema, BuggyPositionSchema
-from app.services.prediction.encoder import CTokenEncoder
-from app.services.prediction.lexer import CustomCLexer
+from app.services.prediction.encoder import CppTokenEncoder
+from app.services.prediction.lexer import CppCustomLexer
 from app.services.prediction.model import BiLSTMModel
 from app.services.source_code import SourceCodeService
 from app.services.utils import UtilsService
@@ -56,9 +56,9 @@ class BiLSTMPredictionService:
         return inputs, targets
         
     def predict(self, source_code) -> List[BuggyPositionSchema]:
-        lexer, encoder = CustomCLexer(), CTokenEncoder()
+        lexer, encoder = CppCustomLexer(source_code), CppTokenEncoder()
         # Tokenize and encode src_code
-        raw_tokens = lexer.tokenize(source_code)
+        raw_tokens = lexer.into_tokens()
         encoded_tokens, encoded_tokens_with_index = encoder.encode_tokens(raw_tokens)
         id_to_token = encoder.get_vocab_id_to_token() # map from id -> token
         
@@ -79,7 +79,7 @@ class BiLSTMPredictionService:
             if output_token_prob is not None and output_token_prob[2] < 0.1:
                 incorrect_pred.append({
                     'position': i,
-                    'start_index': encoded_tokens_with_index[i][1],
+                    'start_index': encoded_tokens_with_index[i][2],
                     'correct_probability': output_token_prob[2],
                     'original_token': output_token_prob,
                     'predicted_tokens': predictions[0]
