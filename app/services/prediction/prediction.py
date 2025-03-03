@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import HTTPException
 import torch
+from unidecode import unidecode
 
 from app.database.models.buggy_position import BuggyPosition
 from app.database.models.model import Model
@@ -56,7 +57,7 @@ class BiLSTMPredictionService:
         return inputs, targets
         
     def predict(self, source_code) -> List[BuggyPositionSchema]:
-        lexer, encoder = CppCustomLexer(source_code), CppTokenEncoder()
+        lexer, encoder = CppCustomLexer(unidecode(source_code)), CppTokenEncoder()
         # Tokenize and encode src_code
         raw_tokens = lexer.into_tokens()
         encoded_tokens, encoded_tokens_with_index = encoder.encode_tokens(raw_tokens)
