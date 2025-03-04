@@ -44,21 +44,19 @@ class SourceCodeService:
         score = 0
         message = 'Accepted'
         template = Template(template)
-        for test in testcase:
-            rendered_code = template.render(STUDENT_ANSWER=user_source_code, TEST=test)
-            payload = {
-                "run_spec": {
-                    "language_id": "cpp",
-                    "sourcefilename": "main.cpp",
-                    "sourcecode": rendered_code,
-                    "input": test.get('input', None),
-                    "file_list": [(item["file_id"], item["file_name"]) for item in test.get("file_list", [])],
-                    "debug": True
+        async with httpx.AsyncClient() as client:
+            for test in testcase:
+                rendered_code = template.render(STUDENT_ANSWER=user_source_code, TEST=test)
+                payload = {
+                    "run_spec": {
+                        "language_id": "cpp",
+                        "sourcefilename": "main.cpp",
+                        "sourcecode": rendered_code,
+                        "input": test.get('input', None),
+                        "file_list": [(item["file_id"], item["file_name"]) for item in test.get("file_list", [])],
+                    }
                 }
-            }
-
-
-            async with httpx.AsyncClient() as client:
+                
                 response = await client.post(f"{jobe_url}/runs", json=payload)
 
                 if test.get('file_list') and response.status_code == 404:
@@ -79,45 +77,45 @@ class SourceCodeService:
                     if response.status_code == 404:
                         raise HTTPException(status_code=404, detail="Jobe server cannot upload input files")
 
-            if response.status_code == 200:
-                response_data = response.json()
-                if response_data['outcome'] == 15:
-                    if response_data['stdout'].strip() == test['output']:
-                        verdict.append({
-                            'testcase_id': test['id'],
-                            'output': response_data['stdout'],
-                            'status': True
-                        })
-                        score += 1
-                    else:
-                        status = 1
-                        verdict.append({
-                            'testcase_id': test['id'],
-                            'output': response_data['stdout'],
-                            'status': False
-                        })
-                elif response_data['outcome'] == 11:
-                    status = 0
-                    message = response_data['cmpinfo']
-                    break
-                elif response_data['outcome'] == 12:
-                    status = 7
-                    message = response_data['stderr']
-                    break
-                elif response_data['outcome'] == 13:
-                    status = 2
-                    message = response_data['stderr']
-                    break
-                elif response_data['outcome'] == 17:
-                    status = 6
-                    message = response_data['cmpinfo']
-                    break
-                elif response_data['outcome'] == 19:
-                    status = 3
-                    message = response_data['stderr']
-                    break
-            else:
-                raise HTTPException(status_code=500, detail='Error when sending request to Jobe server')
+                if response.status_code == 200:
+                    response_data = response.json()
+                    if response_data['outcome'] == 15:
+                        if response_data['stdout'].strip() == test['output']:
+                            verdict.append({
+                                'testcase_id': test['id'],
+                                'output': response_data['stdout'].strip(),
+                                'status': True
+                            })
+                            score += 1
+                        else:
+                            status = 1
+                            verdict.append({
+                                'testcase_id': test['id'],
+                                'output': response_data['stdout'].strip(),
+                                'status': False
+                            })
+                    elif response_data['outcome'] == 11:
+                        status = 0
+                        message = response_data['cmpinfo']
+                        break
+                    elif response_data['outcome'] == 12:
+                        status = 7
+                        message = response_data['stderr']
+                        break
+                    elif response_data['outcome'] == 13:
+                        status = 2
+                        message = response_data['stderr']
+                        break
+                    elif response_data['outcome'] == 17:
+                        status = 6
+                        message = response_data['cmpinfo']
+                        break
+                    elif response_data['outcome'] == 19:
+                        status = 3
+                        message = response_data['stderr']
+                        break
+                else:
+                    raise HTTPException(status_code=500, detail='Error when sending request to Jobe server')
         return SourceCodeSubmitResponseSchema(
             status=status,
             verdict=verdict,
@@ -133,18 +131,38 @@ class SourceCodeService:
 
         template = Template(template)
         rendered_code = template.render(STUDENT_ANSWER=user_source_code, TESTCASES=testcase)
-            
+
+        file_list = [(item["file_id"], item["file_name"]) for test in testcase for item in test.get("file_list", [])]
         payload = {
             "run_spec": {
                 "language_id": "cpp",
                 "sourcefilename": "main.cpp",
-                "sourcecode": rendered_code
+                "sourcecode": rendered_code,
+                "file_list": file_list
             }
         }
 
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(f"{jobe_url}/runs", json=payload)
+
+                if len(file_list) > 0 and response.status_code == 404:
+                    # Gọi API put_file để cập nhật dữ liệu trước khi retry
+                    for file in file_list:
+                        content = base64.b64encode(file['file_content'].encode('utf8')).decode(encoding='UTF-8')
+                        print(content)
+                        put_file_response = await client.put(
+                            f"{jobe_url}/files/{file['file_id']}", 
+                            json={"file_contents": content }
+                        )
+
+                        if put_file_response.status_code != 204:
+                            raise HTTPException(status_code=500, detail="Jobe server cannot find input files")
+
+                    response = await client.post(f"{jobe_url}/runs", json=payload)
+
+                    if response.status_code == 404:
+                        raise HTTPException(status_code=404, detail="Jobe server cannot upload input files")
         except Exception as e:
             print(e)
             raise HTTPException(status_code=500, detail='Error when sending request to Jobe server')
@@ -160,6 +178,7 @@ class SourceCodeService:
                     if actual.strip() == test['output']:
                         verdict.append({
                             'testcase_id': test['id'],
+                            'output': actual.strip(),
                             'status': True
                         })
                         score += 1
@@ -167,6 +186,7 @@ class SourceCodeService:
                         status = 1
                         verdict.append({
                             'testcase_id': test['id'],
+                            'output': actual.strip(),
                             'status': False
                         })
                
