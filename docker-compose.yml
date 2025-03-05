@@ -7,6 +7,7 @@ services:
       - .env
     environment:
       DB_HOST: host.docker.internal # connect to localhost, instead of DB_HOST: db
+      JOBE_URL: http://host.docker.internal:4000/jobe/index.php/restapi/
     ports:
       - '8000:8000'
     depends_on:
