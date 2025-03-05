@@ -13,9 +13,9 @@ class BuggyPositionService:
             buggy_position_list = self.__buggy_position_repository.get_by_prediction_id(prediction_id)
 
             for pos in buggy_position_list:
-                if pos.position in position and not pos.is_token_error:
+                if pos.id in position and not pos.is_token_error:
                     yield self.__buggy_position_repository.update(pos.id, prediction_id, {'is_token_error': True})
-                elif pos.position not in position and pos.is_token_error:
+                elif pos.id not in position and pos.is_token_error:
                     yield self.__buggy_position_repository.update(pos.id, prediction_id, {'is_token_error': False})
                 else:
                     yield pos
@@ -27,9 +27,9 @@ class BuggyPositionService:
             buggy_position_list = self.__buggy_position_repository.get_by_prediction_id(prediction_id)
 
             for pos in buggy_position_list:
-                if pos.position in position and not pos.is_suggestion_useful:
+                if pos.id in position and not pos.is_suggestion_useful:
                     yield self.__buggy_position_repository.update(pos.id, prediction_id, {'is_suggestion_useful': True})
-                elif pos.position not in position and pos.is_suggestion_useful:
+                elif pos.id not in position and pos.is_suggestion_useful:
                     yield self.__buggy_position_repository.update(pos.id, prediction_id, {'is_suggestion_useful': False})
                 else:
                     yield pos
