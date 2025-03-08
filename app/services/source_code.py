@@ -44,7 +44,7 @@ class SourceCodeService:
         score = 0
         message = 'Accepted'
         template = Template(template)
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=20) as client:
             for test in testcase:
                 rendered_code = template.render(STUDENT_ANSWER=user_source_code, TEST=test)
                 payload = {
@@ -56,14 +56,16 @@ class SourceCodeService:
                         "file_list": [(item["file_id"], item["file_name"]) for item in test.get("file_list", [])],
                     }
                 }
-                
-                response = await client.post(f"{jobe_url}/runs", json=payload)
+                try:
+                    response = await client.post(f"{jobe_url}/runs", json=payload)
+                except Exception as e:
+                    print(e)
+                    raise HTTPException(status_code=500, detail='Error when sending request to Jobe server')
 
                 if test.get('file_list') and response.status_code == 404:
                 # Gọi API put_file để cập nhật dữ liệu trước khi retry
                     for file in test['file_list']:
                         content = base64.b64encode(file['file_content'].encode('utf8')).decode(encoding='UTF-8')
-                        print(content)
                         put_file_response = await client.put(
                             f"{jobe_url}/files/{file['file_id']}", 
                             json={"file_contents": content }
@@ -104,7 +106,7 @@ class SourceCodeService:
                         break
                     elif response_data['outcome'] == 13:
                         status = 2
-                        message = response_data['stderr']
+                        message = response_data['stdout']
                         break
                     elif response_data['outcome'] == 17:
                         status = 6
@@ -143,14 +145,13 @@ class SourceCodeService:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=20) as client:
                 response = await client.post(f"{jobe_url}/runs", json=payload)
 
-                if len(file_list) > 0 and response.status_code == 404:
+                if file_list and len(file_list) > 0 and response.status_code == 404:
                     # Gọi API put_file để cập nhật dữ liệu trước khi retry
                     for file in file_list:
                         content = base64.b64encode(file['file_content'].encode('utf8')).decode(encoding='UTF-8')
-                        print(content)
                         put_file_response = await client.put(
                             f"{jobe_url}/files/{file['file_id']}", 
                             json={"file_contents": content }

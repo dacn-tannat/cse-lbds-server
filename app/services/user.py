@@ -1,3 +1,4 @@
+import random
 from app.database.models.user import User
 from app.database.repositories.user import UserRepository
 
@@ -14,5 +15,6 @@ class UserService:
             id = user.get("sub"),
             email = user.get("email"),
             name = user.get("name"),
-            picture = user.get("picture")
+            picture = user.get("picture"),
+            model_type = random.choice([1, 2])
         ))
