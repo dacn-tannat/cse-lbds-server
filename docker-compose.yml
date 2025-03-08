@@ -1,0 +1,35 @@
+name: cse_lbds_local
+services:
+  backend:
+    build: .
+    container_name: fastapi_server
+    env_file:
+      - .env
+    environment:
+      DB_HOST: host.docker.internal # connect to localhost, instead of DB_HOST: db
+      JOBE_URL: http://host.docker.internal:4000/jobe/index.php/restapi/
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - '${DB_PORT}:5432'
+    restart: always
+
+  jobe:
+    image: trampgeek/jobeinabox:latest
+    container_name: jobe_server
+    ports:
+      - '4000:80'
+    restart: always

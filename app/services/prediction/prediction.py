@@ -107,7 +107,8 @@ class BiLSTMPredictionService:
         buggy_position = self.predict(source_code.source_code)
         prediction = self.__prediction_repository.create(Prediction(
             model_id=self.model_config.id,
-            source_code_id=source_code.id
+            source_code_id=source_code.id,
+            is_feedback_submitted=False
         ))
 
         for pos in buggy_position:
@@ -134,10 +135,13 @@ class PredictionService:
             raise HTTPException(status_code=404, detail='Prediction not found')
         return prediction
     
-    def validate_prediction(self, prediction_id, user_id) -> bool:
+    def validate_prediction(self, prediction_id, user_id) -> Prediction:
         prediction = self.get_by_id(prediction_id)
         source_code = SourceCodeService(self.db).get_by_id(prediction.source_code_id)
         if source_code.user_id != user_id:
             raise HTTPException(status_code=401, detail='Cannot access this source code.')
         
-        return True
+        return prediction
+    
+    def update(self, prediction_id, data):
+        self.__prediction_repository.update(prediction_id, data)

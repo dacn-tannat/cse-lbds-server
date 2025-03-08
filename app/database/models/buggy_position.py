@@ -22,4 +22,4 @@ class BuggyPosition(Base):
     )
 
     def __repr__(self):
-        return f"<BuggyPosition(id={self.id} source_code={self.source_code_id} position={self.position} start_index={self.start_index} original_token='{self.original_token}'>"
+        return f"<BuggyPosition(id={self.id} position={self.position} start_index={self.start_index} original_token='{self.original_token}'>"
