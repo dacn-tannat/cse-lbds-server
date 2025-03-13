@@ -5,7 +5,7 @@ class Model(Base):
     __tablename__ = 'model'
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    model_type = Column(Text, nullable=False)
+    model_type = Column(Integer, nullable=False)
     model_path = Column(Text, nullable=False)
     hyperparameter = Column(JSON, nullable=True)
     problem_id = Column(Integer, ForeignKey('problem.id'), nullable=False)
