@@ -14,7 +14,7 @@ from app.database.schemas.generic_response import GenericResponse
 from app.database.schemas.prediction import BugCheckRequestSchema, BugCheckType, BugPositionResponseSchema, BuggyPositionSchema
 from app.services.model import ModelService
 from app.services.buggy_position import BuggyPositionService
-from app.services.prediction.prediction import BiLSTMPredictionService, PredictionService
+from app.services.prediction.prediction import BiLSTMPredictionService, CustomBiLSTMPredictionService, PredictionService
 from app.services.source_code import SourceCodeService
 from app.services.user import UserService
 
@@ -31,7 +31,7 @@ def predict(source_code_id: int, user: dict = Depends(auth_service.get_current_u
         user: User = UserService(db).get_user(user['sub'])
         model_type = user.model_type
         model: Model = ModelService(db).get_model(model_type, source_code.problem_id)
-        prediction = BiLSTMPredictionService(db, model).create_prediction(source_code)
+        prediction = CustomBiLSTMPredictionService(db, model).create_prediction(source_code)
         return GenericResponse(data=prediction)
     except Exception as e:
         print(e)
