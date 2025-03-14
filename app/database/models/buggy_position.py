@@ -11,6 +11,7 @@ class BuggyPosition(Base):
     start_index = Column(Integer, nullable=False)
     original_token = Column(Text, nullable=False)
     line_number = Column(Integer, nullable=False)
+    col_number = Column(Integer, nullable=False)
     predicted_token = Column(Text, nullable=False)
     is_token_error = Column(Boolean, default=False)
     is_suggestion_useful = Column(Boolean, default=False)

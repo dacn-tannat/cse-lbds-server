@@ -2,6 +2,7 @@ from typing import Iterator, List
 
 from app.database.models.buggy_position import BuggyPosition
 from app.database.repositories.buggy_position import BuggyPositionRepository
+from app.database.schemas.prediction import BuggyPositionSchema
 
 
 class BuggyPositionService:
@@ -33,5 +34,15 @@ class BuggyPositionService:
                     yield self.__buggy_position_repository.update(pos.id, prediction_id, {'is_suggestion_useful': False})
                 else:
                     yield pos
+        except Exception as e:
+            raise e
+        
+    def get_by_prediction_id(self, prediction_id) -> List[BuggyPositionSchema]:
+        try:
+            buggy_positions = self.__buggy_position_repository.get_by_prediction_id(prediction_id)
+            
+            # Validate each item in the list
+            return [BuggyPositionSchema.model_validate(bp) for bp in buggy_positions]
+        
         except Exception as e:
             raise e

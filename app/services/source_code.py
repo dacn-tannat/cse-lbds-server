@@ -82,10 +82,10 @@ class SourceCodeService:
                 if response.status_code == 200:
                     response_data = response.json()
                     if response_data['outcome'] == 15:
-                        if response_data['stdout'].strip() == test['output']:
+                        if response_data['stdout'] == test['output']:
                             verdict.append({
                                 'testcase_id': test['id'],
-                                'output': response_data['stdout'].strip(),
+                                'output': response_data['stdout'],
                                 'status': True
                             })
                             score += 1
@@ -93,7 +93,7 @@ class SourceCodeService:
                             status = 1
                             verdict.append({
                                 'testcase_id': test['id'],
-                                'output': response_data['stdout'].strip(),
+                                'output': response_data['stdout'],
                                 'status': False
                             })
                     elif response_data['outcome'] == 11:
@@ -172,14 +172,14 @@ class SourceCodeService:
             response_data = response.json()
             if response_data['outcome'] == 15:
                 # Tách chuỗi bằng dấu phân cách
-                outputs = response_data['stdout'].split("#<ab@17943918#@>#")
+                outputs = response_data['stdout'].split("#<ab@17943918#@>#\n")
 
                 # So sánh output đã tách với expected_outputs
                 for i, (actual, test) in enumerate(zip(outputs, testcase), 1):
-                    if actual.strip() == test['output']:
+                    if actual == test['output']:
                         verdict.append({
                             'testcase_id': test['id'],
-                            'output': actual.strip(),
+                            'output': actual,
                             'status': True
                         })
                         score += 1
@@ -187,7 +187,7 @@ class SourceCodeService:
                         status = 1
                         verdict.append({
                             'testcase_id': test['id'],
-                            'output': actual.strip(),
+                            'output': actual,
                             'status': False
                         })
                
