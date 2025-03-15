@@ -196,7 +196,7 @@ class BiLSTMPredictionService:
         lexer, encoder = CppCustomLexer(unidecode(source_code)), CppTokenEncoder()
         # Tokenize and encode src_code
         raw_tokens = lexer.into_tokens()
-        encoded_tokens, encoded_tokens_with_index = encoder.encode_tokens(raw_tokens)
+        encoded_tokens = encoder.encode_tokens(raw_tokens)
         id_to_token = encoder.get_vocab_id_to_token() # map from id -> token
         
         padded_encoded_tokens = [0] * self.seq_length + encoded_tokens # Padding
@@ -216,7 +216,7 @@ class BiLSTMPredictionService:
             if output_token_prob is not None and output_token_prob[2] < 0.1 and output_token_prob[1] >= 10:
                 incorrect_pred.append({
                     'position': i,
-                    'start_index': encoded_tokens_with_index[i][2],
+                    'start_index': encoder.pos_mapping[i],
                     'correct_probability': output_token_prob[2],
                     'original_token': output_token_prob,
                     'predicted_tokens': predictions[0]

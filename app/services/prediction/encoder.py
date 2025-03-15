@@ -30,6 +30,8 @@ class CppTokenEncoder:
         self.punctuation_map = {
             " ": 1,
             "\t": 2,
+            "\r": 3,
+            "\n": 4,
             "(": 85,
             ")": 86,
             "[": 87,
@@ -86,9 +88,7 @@ class CppTokenEncoder:
             "$": 138,
             "'": 139,
             "@": 140,
-            "`": 141,
-            "\r": 142,
-            "\n": 143
+            "`": 141
         }
 
         self.alphabet_map = {
@@ -113,6 +113,8 @@ class CppTokenEncoder:
         # Variable: 10 - 29
         self.var_id = INIT_VAR_ID
         self.var_name_map = {}
+
+        self.pos_mapping = {}
     
     def encode_tokens(self, token_list):
         encoded_tokens = []
@@ -121,48 +123,62 @@ class CppTokenEncoder:
             if token_type == 'Function':
                 # Function name already exists
                 if token_text in self.func_name_map:
-                    encoded_tokens.append((self.func_name_map[token_text], token_text, token_pos))                # If not: 
+                    self.pos_mapping[len(encoded_tokens)] = token_pos
+                    encoded_tokens.append(self.func_name_map[token_text])               
+                # If not: 
                 # 1. Map function name with current function id and save into func_name_map
                 # 2. Increase func_id by 1
                 else:
                     if self.func_id > MAX_FUNC_ID:
-                        encoded_tokens.append((0, token_text, token_pos))
+                        self.pos_mapping[len(encoded_tokens)] = token_pos
+                        encoded_tokens.append(0)
                     else:
+                        self.pos_mapping[len(encoded_tokens)] = token_pos
                         self.func_name_map[token_text] = self.func_id
-                        encoded_tokens.append((self.func_id, token_text, token_pos))
+                        encoded_tokens.append(self.func_id)
                         self.func_id += 1
             # Variable:
             elif token_type == 'Variable':
                 # Variable name already exists
                 if token_text in self.var_name_map:
-                    encoded_tokens.append((self.var_name_map[token_text], token_text, token_pos))
+                    self.pos_mapping[len(encoded_tokens)] = token_pos
+                    encoded_tokens.append(self.var_name_map[token_text])
                 # If not: 
                 # 1. Map variable name with current variable id and save into var_name_map
                 # 2. Increase var_id by 1
                 else:
                     if self.var_id > MAX_VAR_ID:
-                        encoded_tokens.append((0, token_text, token_pos))
+                        self.pos_mapping[len(encoded_tokens)] = token_pos
+                        encoded_tokens.append(0)
                     else:
+                        self.pos_mapping[len(encoded_tokens)] = token_pos
                         self.var_name_map[token_text] = self.var_id
-                        encoded_tokens.append((self.var_id, token_text, token_pos))
+                        encoded_tokens.append(self.var_id)
                         self.var_id += 1
             # Keyword 
             elif token_type in ['Whitespace', 'Newline', 'BlockComment', 'LineComment']:
                 continue
             elif token_type_id in range(1,10) or token_type_id in range(132, 138):
-                encoded_tokens += self.encode_by_seperated_char(token_text, token_pos)
-            elif token_type_id in range(11, 132):
-                encoded_tokens.append((token_type_id, token_text, token_pos))
+                encoded_tokens += self.encode_by_seperated_char(token_text, token_pos, len(encoded_tokens))
+            elif token_type_id in range(10, 132):
+                self.pos_mapping[len(encoded_tokens)] = token_pos
+                encoded_tokens.append(token_type_id)
             # Undefined case???
             else:
                 print(f"Undefined token: {token_text}")
-                encoded_tokens.append(-1)
-        return [token[0] for token in encoded_tokens], encoded_tokens
+                self.pos_mapping[len(encoded_tokens)] = token_pos
+                encoded_tokens.append(0)
+        return encoded_tokens
     
-    def encode_by_seperated_char(self, token_text, pos):
+    def encode_by_seperated_char(self, token_text, pos, idx):
         encoded_tokens = []
         for i, char in enumerate(token_text):
-            encoded_tokens.append((self.encode_token(char), char, pos + i))
+            token_id = self.encode_token(char)
+            if token_id < 10:
+                continue
+            else:
+                self.pos_mapping[idx + len(encoded_tokens)] = pos + i
+                encoded_tokens.append(token_id)
         return encoded_tokens
     
     def encode_token(self, token_text):
@@ -174,7 +190,7 @@ class CppTokenEncoder:
             return self.number_map[token_text]
         else:
             print(f"Undefined token: {token_text}")
-            return -1
+            return 0
 
     def reset_id(self):
         '''
