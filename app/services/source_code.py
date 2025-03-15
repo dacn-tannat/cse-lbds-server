@@ -54,6 +54,9 @@ class SourceCodeService:
                         "sourcecode": rendered_code,
                         "input": test.get('input', None),
                         "file_list": [(item["file_id"], item["file_name"]) for item in test.get("file_list", [])],
+                        "parameters": {
+                            "compileargs": ["-Wno-unused-variable", "-Wno-error=unused-variable"]
+                        }
                     }
                 }
                 try:
@@ -135,12 +138,18 @@ class SourceCodeService:
         rendered_code = template.render(STUDENT_ANSWER=user_source_code, TESTCASES=testcase)
 
         file_list = [(item["file_id"], item["file_name"]) for test in testcase for item in test.get("file_list", [])]
+        input = "\n".join(test.get("input", "") for test in testcase)
+        
         payload = {
             "run_spec": {
                 "language_id": "cpp",
                 "sourcefilename": "main.cpp",
                 "sourcecode": rendered_code,
-                "file_list": file_list
+                "file_list": file_list,
+                "input": input,
+                "parameters": {
+                    "compileargs": ["-Wno-unused-variable", "-Wno-error=unused-variable"]
+                }
             }
         }
 
