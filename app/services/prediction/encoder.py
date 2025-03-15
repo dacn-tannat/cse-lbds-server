@@ -6,10 +6,10 @@ class Token:
     token_type: str
     token_type_id: Optional[int] = None
 
-INIT_FUNC_ID = 205
-MAX_FUNC_ID = 214
-INIT_VAR_ID = 215
-MAX_VAR_ID = 234
+INIT_FUNC_ID = 206
+MAX_FUNC_ID = 215
+INIT_VAR_ID = 216
+MAX_VAR_ID = 235
 
 class CppTokenEncoder:
 
@@ -101,8 +101,8 @@ class CppTokenEncoder:
         }
 
         self.number_map = {
-            '0': 195, '1': 196, '2': 197, '3': 198, '4': 199, '5': 200, '6': 201, '7': 202,
-            '8': 203, '9': 204
+            '0': 196, '1': 197, '2': 198, '3': 199, '4': 200, '5': 201, '6': 202, '7': 203,
+            '8': 204, '9': 205
         }
 
         self.func_id = INIT_FUNC_ID
