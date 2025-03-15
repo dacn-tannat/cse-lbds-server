@@ -16,6 +16,12 @@ from app.services.prediction.model import BiLSTMModel, CustomBiLSTMModel
 from app.services.source_code import SourceCodeService
 from app.services.utils import UtilsService
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 class CustomBiLSTMPredictionService:
     def __init__(self, db, model: Model):
         self.model_config = model
@@ -213,7 +219,7 @@ class BiLSTMPredictionService:
               
             output_token_prob = next((pred for pred in predictions if pred[1] == output), None)
 
-            if output_token_prob is not None and output_token_prob[2] < 0.1:
+            if output_token_prob is not None and output_token_prob[2] < 0.1 and output_token_prob[1] >= 10:
                 incorrect_pred.append({
                     'position': i,
                     'start_index': encoded_tokens_with_index[i][2],

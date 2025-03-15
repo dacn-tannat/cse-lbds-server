@@ -28,6 +28,8 @@ class CppTokenEncoder:
             'void': 81, 'volatile': 82, 'wchar': 83, 'while': 84
         }
         self.punctuation_map = {
+            " ": 1,
+            "\t": 2,
             "(": 85,
             ")": 86,
             "[": 87,
@@ -123,9 +125,12 @@ class CppTokenEncoder:
                 # 1. Map function name with current function id and save into func_name_map
                 # 2. Increase func_id by 1
                 else:
-                    self.func_name_map[token_text] = self.func_id
-                    encoded_tokens.append((self.func_id, token_text, token_pos))
-                    self.func_id += 1
+                    if self.func_id > MAX_FUNC_ID:
+                        encoded_tokens.append((0, token_text, token_pos))
+                    else:
+                        self.func_name_map[token_text] = self.func_id
+                        encoded_tokens.append((self.func_id, token_text, token_pos))
+                        self.func_id += 1
             # Variable:
             elif token_type == 'Variable':
                 # Variable name already exists
@@ -135,14 +140,17 @@ class CppTokenEncoder:
                 # 1. Map variable name with current variable id and save into var_name_map
                 # 2. Increase var_id by 1
                 else:
-                    self.var_name_map[token_text] = self.var_id
-                    encoded_tokens.append((self.var_id, token_text, token_pos))
-                    self.var_id += 1
+                    if self.var_id > MAX_VAR_ID:
+                        encoded_tokens.append((0, token_text, token_pos))
+                    else:
+                        self.var_name_map[token_text] = self.var_id
+                        encoded_tokens.append((self.var_id, token_text, token_pos))
+                        self.var_id += 1
             # Keyword 
             elif token_type in ['Whitespace', 'Newline', 'BlockComment', 'LineComment']:
                 continue
             elif token_type_id in range(1,10) or token_type_id in range(132, 138):
-                encoded_tokens += self.encode_by_seperated_char(token_text.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", ""), token_pos)
+                encoded_tokens += self.encode_by_seperated_char(token_text, token_pos)
             elif token_type_id in range(11, 132):
                 encoded_tokens.append((token_type_id, token_text, token_pos))
             # Undefined case???
