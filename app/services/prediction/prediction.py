@@ -16,12 +16,6 @@ from app.services.prediction.model import BiLSTMModel, CustomBiLSTMModel
 from app.services.source_code import SourceCodeService
 from app.services.utils import UtilsService
 
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
 class CustomBiLSTMPredictionService:
     def __init__(self, db, model: Model):
         self.model_config = model
