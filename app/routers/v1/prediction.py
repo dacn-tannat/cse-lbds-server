@@ -1,5 +1,3 @@
-import ast
-import random
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,7 +9,7 @@ from app.database.config import get_db
 from app.database.models.model import Model
 from app.database.models.source_code import SourceCode
 from app.database.schemas.generic_response import GenericResponse
-from app.database.schemas.prediction import BugCheckRequestSchema, BugCheckType, BugPositionResponseSchema, BuggyPositionSchema
+from app.database.schemas.prediction import BugCheckRequestSchema, BugCheckType, BugPositionResponseSchema, BuggyPositionSchema, PredictionSchema
 from app.services.model import ModelService
 from app.services.buggy_position import BuggyPositionService
 from app.services.prediction.prediction import BiLSTMPredictionService, CustomBiLSTMPredictionService, PredictionService
@@ -28,15 +26,13 @@ def predict(source_code_id: int, user: dict = Depends(auth_service.get_current_u
         source_code: SourceCode = SourceCodeService(db).get_by_id(source_code_id)
         if source_code.user_id != user['sub']:
             raise HTTPException(status_code=401, detail='Cannot access this source code.')
-        model_type = ast.literal_eval(ConfigRepository(db).get_by_name('ACTIVE_MODEL').value)
-        # if model_type is None or len(model_type) == 0:
-        #     model_type = 'BiLSTM'
-        # else:
-        #     model_type = random.choice(model_type)
-        # NOTE: Override model_type for testing
-        model_type = 'CustomBiLSTM'
+        user: User = UserService(db).get_user(user['sub'])
+        model_type = user.model_type
         model: Model = ModelService(db).get_model(model_type, source_code.problem_id)
-        prediction = CustomBiLSTMPredictionService(db, model).create_prediction(source_code)
+        if model_type == 1:
+            prediction = BiLSTMPredictionService(db, model).create_prediction(source_code)
+        else:
+            prediction = CustomBiLSTMPredictionService(db, model).create_prediction(source_code)
         return GenericResponse(data=prediction)
     except Exception as e:
         print(e)
@@ -58,3 +54,17 @@ def bug_check(request: BugCheckRequestSchema, user: dict = Depends(auth_service.
     except Exception as e:
         print(e)
         raise e
+    
+@predictionRouter.get('/{prediction_id}', response_model=GenericResponse[PredictionSchema])
+def get_prediction(prediction_id: int, user: dict = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    prediction_service = PredictionService(db)
+    prediction: Prediction = prediction_service.validate_prediction(prediction_id, user['sub'])
+    source_code = SourceCodeService(db).get_by_id(prediction.source_code_id)
+    buggy_position: List[BuggyPositionSchema] = BuggyPositionService(db).get_by_prediction_id(prediction_id)
+    return GenericResponse(data=PredictionSchema(
+        prediction_id=prediction_id,
+        source_code=source_code.source_code,
+        is_submitted_feedback=prediction.is_feedback_submitted,
+        buggy_position=buggy_position
+    ))
+    

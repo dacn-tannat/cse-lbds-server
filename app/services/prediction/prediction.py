@@ -94,18 +94,10 @@ class CustomBiLSTMPredictionService:
             ] # list of (token, id, prob)
             output_token_prob = next((pred for pred in token_predictions if pred[1] == token_target), None)
 
-            print(f'{output_token_prob = }, {token_predictions[0] = }')
+            # print(f'{output_token_prob = }, {token_predictions[0] = }')
             
             if output_token_prob != token_predictions[0]:
                 if input_score[-1] < 10 and score_predictions[0][0] < 10:
-                    print('here')
-                    # incorrect_pred.append({
-                    #     'position': i - 1,
-                    #     'start_index': encoded_tokens_with_index[i-1][2],
-                    #     'correct_probability': previous_output_token_prob[2],
-                    #     'original_token': previous_output_token_prob,
-                    #     'predicted_tokens': previous_token_predictions[0]
-                    # })
                     incorrect_pred.append({
                         'position': i,
                         'start_index': encoded_tokens_with_index[i][2],
@@ -119,24 +111,23 @@ class CustomBiLSTMPredictionService:
                 input_score.pop(0)
                 input_score.append(int(score * 10))
             
-            print(input_score)
-            print(len(input_score))
-            
             # previous_output_token_prob = output_token_prob
             # previous_token_predictions = token_predictions
                 
         sorted_incorrect_pred = sorted(incorrect_pred, key=lambda x: x['correct_probability'])
-        top_10_incorrect = sorted_incorrect_pred[:10]
-        sorted_top_10_incorrect = sorted(top_10_incorrect, key=lambda x: x['position'])
+        top_5_incorrect = sorted_incorrect_pred[:5]
+        sorted_top_5_incorrect = sorted(top_5_incorrect, key=lambda x: x['position'])
         result = []
-        for i, incorrect in enumerate(sorted_top_10_incorrect):
+        for i, incorrect in enumerate(sorted_top_5_incorrect):
+            line_number, col_number = self.__utils_service.find_line_and_column_from_index(source_code, incorrect['start_index'])
             result.append(BuggyPositionSchema(
                 id=i,
                 position=incorrect['position'],
                 start_index=incorrect['start_index'],
                 original_token=incorrect['original_token'][0],
                 predicted_token=str(incorrect['predicted_tokens'][0]),
-                line_number=self.__utils_service.find_line_from_index(source_code, incorrect['start_index']),
+                line_number=line_number,
+                col_number=col_number,
                 is_token_error=False,
                 is_suggestion_useful=False
             ))
@@ -232,17 +223,19 @@ class BiLSTMPredictionService:
                 })
 
         sorted_incorrect_pred = sorted(incorrect_pred, key=lambda x: x['correct_probability'])
-        top_10_incorrect = sorted_incorrect_pred[:10]
-        sorted_top_10_incorrect = sorted(top_10_incorrect, key=lambda x: x['position'])
+        top_5_incorrect = sorted_incorrect_pred[:5]
+        sorted_top_5_incorrect = sorted(top_5_incorrect, key=lambda x: x['position'])
         result = []
-        for i, incorrect in enumerate(sorted_top_10_incorrect):
+        for i, incorrect in enumerate(sorted_top_5_incorrect):
+            line_number, col_number = self.__utils_service.find_line_and_column_from_index(source_code, incorrect['start_index'])
             result.append(BuggyPositionSchema(
                 id=i,
                 position=incorrect['position'],
                 start_index=incorrect['start_index'],
                 original_token=incorrect['original_token'][0],
                 predicted_token=str(incorrect['predicted_tokens'][0]),
-                line_number=self.__utils_service.find_line_from_index(source_code, incorrect['start_index']),
+                line_number=line_number,
+                col_number=col_number,
                 is_token_error=False,
                 is_suggestion_useful=False
             ))
